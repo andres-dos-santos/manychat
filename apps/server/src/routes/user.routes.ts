@@ -1,5 +1,4 @@
 import { Router } from "express";
-import jwt from "jsonwebtoken";
 
 import bodyParser from "body-parser";
 import { Webhook } from "svix";
@@ -8,14 +7,17 @@ import { prisma } from "../prisma";
 
 const userRouter = Router();
 
-userRouter.get("/", async (req, res) => {
-	const user = await clerkClient.users.getUser(
-		"user_2txInLTyodJfNxEU9rJjvMmswAI",
-	);
+userRouter.get("/api/v1/users", async (req, res) => {
+	const users = await clerkClient.users.getUserList();
 
-	// console.log(user)
+	const data = users.data.map((item) => ({
+		name: item.firstName ?? item.emailAddresses[0].emailAddress.split("@")[0],
+		email: item.emailAddresses[0].emailAddress,
+		image: item.imageUrl,
+		id: item.id,
+	}));
 
-	res.send(user);
+	res.json(data);
 });
 
 userRouter.post(
@@ -71,33 +73,34 @@ userRouter.post(
 			const authId = evt.data.user_id;
 
 			const user = await clerkClient.users.getUser(authId);
-			console.log(user);
 
 			if (user) {
 				const email = user.emailAddresses[0].emailAddress;
 
-				const { id } = await prisma.user.create({
-					data: {
-						email,
-						firstName: user.firstName ?? "",
-						lastName: user.lastName ?? "",
-						phone: "",
-						imageUrl: user.imageUrl,
-					},
-					select: {
-						id: true,
-					},
+				const userAlreadyExists = await prisma.user.findFirst({
+					where: { email },
 				});
 
-				const token = jwt.sign(
-					{ id, authId: user.id, email },
-					process.env.TOKEN_SECRET ?? "",
-					{
-						expiresIn: "7d",
-					},
-				);
+				if (!userAlreadyExists) {
+					await prisma.user.create({
+						data: {
+							email,
+							firstName: user.firstName ?? "",
+							lastName: user.lastName ?? "",
+							phone: "",
+							imageUrl: user.imageUrl,
+						},
+						select: {
+							id: true,
+						},
+					});
 
-				res.status(201).json({ token });
+					res.status(201).json({ status: true, message: "Created!" });
+				}
+
+				res
+					.status(400)
+					.json({ status: false, message: "User already exists!" });
 			}
 		}
 	},

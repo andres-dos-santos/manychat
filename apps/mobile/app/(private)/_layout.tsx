@@ -1,17 +1,14 @@
-import { useAuth, useUser } from '@clerk/clerk-expo'
-import { Stack } from 'expo-router'
+import { useAuth } from "@clerk/clerk-expo";
+import { Stack } from "expo-router";
 
 export default function Layout() {
-	const { isSignedIn } = useAuth()
-	const { user } = useUser()
-
-	console.log(user)
+	const { isSignedIn } = useAuth();
 
 	return (
 		<Stack
 			screenOptions={{
-				animation: 'fade_from_bottom',
-				contentStyle: { backgroundColor: '#1C1C1C' },
+				animation: "fade_from_bottom",
+				contentStyle: { backgroundColor: "#1C1C1C" },
 			}}
 		>
 			<Stack.Screen
@@ -30,5 +27,5 @@ export default function Layout() {
 				redirect={!isSignedIn}
 			/>
 		</Stack>
-	)
+	);
 }
