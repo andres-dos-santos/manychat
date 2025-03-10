@@ -101,7 +101,6 @@ export default function HomeScreen() {
 						<Text style={s.listEmptyTitle}>Add friends with email</Text>
 					</View>
 				)}
-				// data={DATA}
 				data={data}
 				renderItem={({ item }) => {
 					const isInTheGroup = members.find(
@@ -124,9 +123,9 @@ export default function HomeScreen() {
 								<Text style={s.name}>{item.name}</Text>
 
 								<View>
-									<Text style={s.time}>
+									{/* <Text style={s.time}>
 										{item.time} • <Text style={s.message}>{item.message}</Text>
-									</Text>
+									</Text> */}
 								</View>
 							</View>
 						</Pressable>

@@ -1,96 +1,70 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from 'expo-router'
 import {
 	FlatList,
 	Image,
+	Pressable,
 	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
 	View,
-} from "react-native";
-import { Feather } from "@expo/vector-icons";
+} from 'react-native'
+import dayjs from 'dayjs'
+import { Feather } from '@expo/vector-icons'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { width } from "@/utils/sizes";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@/@types/user";
+import { width } from '@/utils/sizes'
 
-const messages = [
-	{
-		id: "1",
-		text: "Oi, tudo bem?",
-		sender: "A",
-		image:
-			"https://plus.unsplash.com/premium_photo-1669703777437-27602d656c27?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "2",
-		text: "Oi! Tudo ótimo e você?",
-		sender: "B",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "3",
-		text: "Estou bem também! Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito?",
-		sender: "A",
-		image:
-			"https://plus.unsplash.com/premium_photo-1669703777437-27602d656c27?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "4",
-		text: "Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito?",
-		sender: "B",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "5",
-		text: "Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito?",
-		sender: "B",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "6",
-		text: "Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito?",
-		sender: "A",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "7",
-		text: "Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito? Que bom! O que tem feito?",
-		sender: "B",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-	{
-		id: "8",
-		text: "Que bom!",
-		sender: "A",
-		image:
-			"https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-	},
-];
+import { db } from '@/db/db'
+
+import type { User } from '@/@types/user'
+import { Colors } from '@/constants/Colors'
+import { useMessagesDatabase, type Message } from '@/db/use-messages-database'
 
 export default function Chat() {
-	const { user: username } = useLocalSearchParams<"/chat/[user]">();
+	const { user: username } = useLocalSearchParams<'/chat/[user]'>()
 
-	// const { data, error } = useQuery({
-	// 	queryKey: ["get-users"],
-	// 	queryFn: getUsers,
-	// 	// select(data) {
-	// 	// 	return data.map((item) => ({
-	// 	// 		...item,
-	// 	// 		email: item.emailAddresses[0].emailAddress,
-	// 	// 	}));
-	// 	// },
-	// });
+	const query = useQueryClient()
+	const { save, search } = useMessagesDatabase()
 
-	const query = useQueryClient();
+	const users = query.getQueryData<User[]>(['get-users'])
+	const user = users ? users.find((user) => user.name === username) : null
 
-	const users = query.getQueryData<User[]>(["get-users"]);
-	const user = users ? users.find((user) => user.name === username) : null;
+	const [message, setMessage] = useState('')
+
+	const { data: messages } = useQuery({
+		queryKey: ['get-messages', user],
+		queryFn: async () => {
+			if (user) {
+				const result = await search(user.id)
+
+				return result as Message[]
+			}
+		},
+	})
+
+	async function onSubmit() {
+		if (user && message) {
+			try {
+				const insertedMessage = await save({
+					message,
+					image: user.image,
+					senderId: user.id,
+				})
+
+				if (insertedMessage && messages) {
+					messages.push(insertedMessage as Message)
+				}
+
+				setMessage('')
+			} catch (error) {
+				console.log(error)
+			}
+		}
+	}
+
+	console.log(messages)
 
 	return user ? (
 		<View style={s.container}>
@@ -109,72 +83,88 @@ export default function Chat() {
 					<FlatList
 						contentContainerStyle={s.contentContainerStyle}
 						data={messages}
-						keyExtractor={(item) => item.id}
+						keyExtractor={(item) => item.id.toString()}
 						showsVerticalScrollIndicator={false}
 						renderItem={({ item, index }) => {
-							const showImage = !(
-								messages[index - 1]?.sender === messages[index].sender
-							);
+							let showImage = true
+
+							if (messages) {
+								showImage = !(
+									messages[index - 1]?.senderId === messages[index].senderId
+								)
+							}
+
+							const sendingByUser = item.senderId !== user.id
 
 							return (
-								<View
+								<Pressable
+									onPress={async () => {
+										try {
+											await db('messages').remove(item.message)
+										} catch (error) {
+											console.log(error)
+										}
+									}}
 									style={[
 										s.messageContainer,
-										item.sender === "A" ? s.leftMessage : s.rightMessage,
+										sendingByUser ? s.leftMessage : s.rightMessage,
 									]}
 								>
-									<View
-										style={[
-											s.message,
-											{
-												marginTop: showImage ? 8 : 2,
-											},
-										]}
-									>
-										<Text
+									<View style={s.message}>
+										<View
 											style={[
-												item.sender === "A"
-													? s.messageTextLeft
-													: s.messageTextRight,
-												{
-													borderRadius: 2,
-												},
+												sendingByUser ? s.messageTextLeft : s.messageTextRight,
 											]}
 										>
-											{item.text}
-										</Text>
+											<Text style={s.messageContent}>{item.message}</Text>
+											<Text style={s.timeMessage}>
+												{dayjs(item.createdAt).format('HH:mm')}
+											</Text>
+										</View>
 									</View>
 									<Image
 										source={{ uri: showImage ? item.image : undefined }}
 										style={s.messageImage}
 									/>
-								</View>
-							);
+								</Pressable>
+							)
 						}}
 					/>
 				</View>
 
 				<View style={s.form}>
 					<TextInput
+						value={message}
+						onChangeText={setMessage}
 						multiline
 						style={s.input}
 						placeholder="Write a message here"
 						cursorColor="#FBCD40"
 					/>
-					<TouchableOpacity activeOpacity={0.8} style={s.button}>
+					<TouchableOpacity
+						onPress={onSubmit}
+						activeOpacity={0.8}
+						style={s.button}
+					>
 						<Feather name="chevron-right" size={20} />
 					</TouchableOpacity>
 				</View>
 			</View>
 		</View>
-	) : null;
+	) : null
 }
 
 const s = StyleSheet.create({
+	timeMessage: {
+		color: Colors.zinc[800],
+		fontFamily: '500',
+		fontSize: 8,
+		marginLeft: 'auto',
+	},
 	container: {
 		flex: 1,
-		backgroundColor: "#1C1C1C",
-		position: "absolute",
+		backgroundColor: '#1C1C1C',
+		position: 'absolute',
 		top: -44,
 		bottom: 0,
 		left: 0,
@@ -189,8 +179,8 @@ const s = StyleSheet.create({
 		padding: 24,
 	},
 	headerTitle: {
-		fontFamily: "600",
-		color: "#FFFFFF",
+		fontFamily: '600',
+		color: '#FFFFFF',
 		letterSpacing: -0.25,
 		fontSize: 16,
 	},
@@ -198,13 +188,13 @@ const s = StyleSheet.create({
 		gap: 12,
 		height: 80,
 		paddingHorizontal: 16,
-		flexDirection: "row",
-		alignItems: "center",
+		flexDirection: 'row',
+		alignItems: 'center',
 	},
 	content: {
-		marginTop: "auto",
+		marginTop: 'auto',
 		flex: 1,
-		backgroundColor: "#FFFFFF",
+		backgroundColor: '#FFFFFF',
 		borderTopLeftRadius: 32,
 		borderTopRightRadius: 32,
 		borderBottomRightRadius: 24,
@@ -214,68 +204,71 @@ const s = StyleSheet.create({
 		flex: 1,
 	},
 	form: {
-		flexDirection: "row",
-		alignItems: "flex-end",
+		flexDirection: 'row',
+		alignItems: 'flex-end',
 		gap: 12,
 		paddingHorizontal: 24,
 		paddingBottom: 20,
 	},
 	input: {
 		minHeight: 56,
-		height: "auto",
+		height: 'auto',
 		paddingHorizontal: 20,
 		flex: 1,
 		borderRadius: 32,
-		backgroundColor: "#E4E4E7",
-		fontFamily: "500",
+		backgroundColor: '#E4E4E7',
+		fontFamily: '500',
 		fontSize: 14,
+		letterSpacing: -0.25,
+	},
+	messageContent: {
+		color: '#000',
+		fontFamily: '500',
+		fontSize: 12,
+		lineHeight: 18,
 		letterSpacing: -0.25,
 	},
 	button: {
 		height: 56,
 		width: 56,
 		borderRadius: 999,
-		backgroundColor: "#FBCD40",
-		alignItems: "center",
-		justifyContent: "center",
+		backgroundColor: '#FBCD40',
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
-
 	messageContainer: {
 		gap: 8,
 	},
 	message: {
-		flexDirection: "row",
-		alignItems: "flex-end",
+		marginTop: 2,
+		flexDirection: 'row',
+		alignItems: 'flex-end',
 		maxWidth: width / 1.7,
 	},
 	leftMessage: {
-		flexDirection: "row-reverse",
-		alignSelf: "flex-start",
+		flexDirection: 'row-reverse',
+		alignSelf: 'flex-start',
 	},
 	rightMessage: {
-		flexDirection: "row",
-		alignSelf: "flex-end",
+		flexDirection: 'row',
+		alignSelf: 'flex-end',
 	},
 	messageTextRight: {
-		color: "#000",
-		fontFamily: "400",
-		lineHeight: 18,
-		letterSpacing: -0.25,
-		padding: 12,
-		backgroundColor: "#FBCD40",
+		paddingHorizontal: 8,
+		paddingVertical: 6,
+		borderRadius: 6,
+		backgroundColor: '#FBCD40',
 	},
 	messageTextLeft: {
-		color: "#000",
-		fontFamily: "400",
-		lineHeight: 18,
-		letterSpacing: -0.25,
-		padding: 12,
-		backgroundColor: "#E4E4E7",
+		paddingHorizontal: 8,
+		paddingVertical: 6,
+		borderRadius: 6,
+		backgroundColor: '#E4E4E7',
 	},
 	messageImage: {
-		width: 32,
-		height: 32,
+		width: 24,
+		height: 24,
 		borderRadius: 32,
 		marginTop: 4,
 	},
-});
+})

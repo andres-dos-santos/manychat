@@ -28,6 +28,8 @@ import { store } from '@/store'
 
 import { Toast } from '@/components/toast'
 import { InitialLayout } from '@/components/initial-layout'
+import { SQLiteProvider } from 'expo-sqlite'
+import { initializeMessagesDatabase } from '@/db/initialize'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -69,7 +71,12 @@ export default function App() {
 					>
 						<ClerkLoaded>
 							<QueryClientProvider client={queryClient}>
-								<InitialLayout />
+								<SQLiteProvider
+									databaseName="manychat.db"
+									onInit={initializeMessagesDatabase}
+								>
+									<InitialLayout />
+								</SQLiteProvider>
 							</QueryClientProvider>
 						</ClerkLoaded>
 					</ClerkProvider>

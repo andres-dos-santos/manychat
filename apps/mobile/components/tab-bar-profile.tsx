@@ -22,11 +22,12 @@ export function TabBarProfile() {
 
 const s = StyleSheet.create({
 	tabIcon: {
+		height: TAB_BAR_HEIGHT,
 		minHeight: TAB_BAR_HEIGHT,
+		maxHeight: TAB_BAR_HEIGHT,
 		alignItems: "center",
 		justifyContent: "center",
 		marginTop: TAB_ICON_MARGIN_TOP,
-		flex: 1,
 	},
 	image: {
 		height: 28,
